@@ -341,7 +341,7 @@ class FoldingMiner(BaseMinerNeuron):
                     self=self, synapse=synapse, event=event, output_dir=output_dir
                 )
 
-        check if the md_inputs is empty here. If so, then the validator is broken
+        #check if the md_inputs is empty here. If so, then the validator is broken
         if not synapse.md_inputs:
             bt.logging.error("❗ md_inputs is empty. This indicates an issue with the validator. ❗")
             return synapse  # Return the synapse as is
