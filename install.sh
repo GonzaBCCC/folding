@@ -25,7 +25,7 @@ tar xfz gromacs-2024.1.tar.gz
 cd gromacs-2024.1
 mkdir build
 cd build
-cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON
+cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DGMX_MPI=ON -DGMX_GPU=CUDA -DGMX_CUDA_TARGET_SM=86 -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
 make -j$NUM_PHYSICAL_CORES
 make check
 make install
