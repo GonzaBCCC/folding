@@ -68,7 +68,7 @@ def add_args(cls, parser):
         "--neuron.device",
         type=str,
         help="Device to run on.",
-        default="cpu",
+        default="gpu",
     )
 
     parser.add_argument(
