@@ -22,6 +22,27 @@ from folding.utils.ops import (
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASE_DATA_PATH = os.path.join(ROOT_DIR, "miner-data")
 
+######
+# Function to modify specific lines in emin.mdp and add new lines
+def modify_emin_mdp(md_inputs, new_lines=None):
+    emin_mdp = md_inputs['emin.mdp']
+    lines = emin_mdp.split('\n')
+    
+    # Modify specific lines
+    for i, line in enumerate(lines):
+        if line.startswith('emstep'):
+            lines[i] = 'emstep = 0.015   ; Modified minimization step size'
+        elif line.startswith('nsteps'):
+            lines[i] = 'nsteps = 50     ; Modified number of steps'
+    
+    # Add new lines if provided
+    if new_lines:
+        lines.extend(new_lines)
+    
+    # Join the lines back together
+    md_inputs['emin.mdp'] = '\n'.join(lines)
+    return md_inputs
+#######
 
 def attach_files(
     files_to_attach: List, synapse: JobSubmissionSynapse
@@ -456,6 +477,18 @@ class SimulationManager:
         check_if_directory_exists(output_directory=self.output_dir)
         os.chdir(self.output_dir)  # TODO: will this be a problem with many processes?
 
+        #####
+        # Modify the md_inputs dictionary
+        new_lines = [
+            #'new_param1 = value1   ; Description for new_param1',
+            #'new_param2 = value2   ; Description for new_param2'
+            ]
+        if len(new_lines)>0:
+            md_inputs = modify_emin_mdp(md_inputs, new_lines)
+        else:
+            md_inputs = modify_emin_mdp(md_inputs)
+        #####
+        
         # The following files are required for GROMACS simulations and are recieved from the validator
         for filename, content in md_inputs.items():
             # Write the file to the output directory
