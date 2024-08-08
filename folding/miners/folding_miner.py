@@ -441,7 +441,7 @@ class SimulationManager:
         mock: bool = False,
     ):
         """run method to handle the processing of generic simulations.
-
+    
         Args:
             md_inputs (Dict): input files from the validator
             commands (Dict): dictionary where state as the key and the commands as the value
@@ -451,39 +451,82 @@ class SimulationManager:
         bt.logging.info(
             f"Running simulation for protein: {self.pdb_id} with files {md_inputs.keys()}"
         )
-
+    
         # Make sure the output directory exists and if not, create it
         check_if_directory_exists(output_directory=self.output_dir)
         os.chdir(self.output_dir)  # TODO: will this be a problem with many processes?
-
+    
         # The following files are required for GROMACS simulations and are recieved from the validator
         for filename, content in md_inputs.items():
             # Write the file to the output directory
             with open(filename, "w") as file:
                 bt.logging.info(f"\nWriting {filename} to {self.output_dir}")
                 file.write(content)
-
+    
+        # Step 1: Search the pdb_id in Alphafold Protein Structure Database
+        alphafold_url = f"https://alphafold.ebi.ac.uk/api/prediction/{self.pdb_id}"
+        response = requests.get(alphafold_url)
+    
+        if response.status_code == 200:
+            prediction_data = response.json()
+            confidence_metrics = [p['plddt'] for p in prediction_data]
+    
+            if all(c > 60 for c in confidence_metrics):
+                bt.logging.info(f"Found Alphafold prediction for {self.pdb_id} with confidence over 60%")
+                pdb_content = prediction_data[0]['pdb']
+                pdb_filename = os.path.join(self.output_dir, f"{self.pdb_id}.pdb")
+                with open(pdb_filename, "w") as pdb_file:
+                    pdb_file.write(pdb_content)
+            else:
+                bt.logging.info(f"Alphafold prediction for {self.pdb_id} has confidence below 60%")
+                run_localcolabfold = True
+        else:
+            bt.logging.info(f"No Alphafold prediction found for {self.pdb_id}")
+            run_localcolabfold = True
+    
+        # Step 2: If the pdb_id is not found in the Database, run localcolabfold
+        if run_localcolabfold:
+            bt.logging.info(f"Running localcolabfold for {self.pdb_id}")
+            localcolabfold_command = f"localcolabfold --pdb --output {self.output_dir} {self.pdb_id}"
+            run_cmd_commands([localcolabfold_command], suppress_cmd_output=suppress_cmd_output)
+        
+        # Ensure the output PDB file is formatted for GROMACS simulation
+        # Assume that localcolabfold generates a file with the format "{self.pdb_id}.pdb"
+        pdb_filename = os.path.join(self.output_dir, f"{self.pdb_id}.pdb")
+        if not os.path.exists(pdb_filename):
+            raise FileNotFoundError(f"PDB file not found after running localcolabfold for {self.pdb_id}")
+    
+        # Continue with the original steps for the GROMACS simulation
         for state, commands in commands.items():
             bt.logging.info(f"Running {state} commands")
             with open(self.state_file_name, "w") as f:
                 f.write(f"{state}\n")
-
+    
             run_cmd_commands(
                 commands=commands, suppress_cmd_output=suppress_cmd_output, verbose=True
             )
-
+    
             if mock:
                 bt.logging.warning("Running in mock mode, creating fake files...")
                 for ext in ["tpr", "xtc", "edr", "cpt"]:
                     self.create_empty_file(
                         os.path.join(self.output_dir, f"{state}.{ext}")
                     )
-
+    
         bt.logging.success(f"✅ Finished simulation for protein: {self.pdb_id} ✅")
-
+    
         state = "finished"
         with open(self.state_file_name, "w") as f:
             f.write(f"{state}\n")
+
+    def get_alphafold_pdb(self, pdb_id):
+        """Fetches PDB data from AlphaFold Protein Structure Database."""
+        url = f"https://alphafold.ebi.ac.uk/api/prediction/{pdb_id}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
 
     def get_state(self) -> str:
         """get_state reads a txt file that contains the current state of the simulation"""
