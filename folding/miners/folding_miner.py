@@ -394,7 +394,7 @@ class FoldingMiner(BaseMinerNeuron):
             # We also check if the stake is greater than 10_000, which is the minimum stake to not be blacklisted.
             if (
                 not self.metagraph.validator_permit[uid]
-                or self.metagraph.stake[uid] < 10_000
+                or self.metagraph.stake[uid] < 20_000
             ):
                 bt.logging.warning(
                     f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
@@ -464,25 +464,25 @@ class SimulationManager:
                 file.write(content)
     
         # Step 1: Search the pdb_id in Alphafold Protein Structure Database
-        alphafold_url = f"https://alphafold.ebi.ac.uk/api/prediction/{self.pdb_id}"
-        response = requests.get(alphafold_url)
+        # alphafold_url = f"https://alphafold.ebi.ac.uk/api/prediction/{self.pdb_id}"
+        # response = requests.get(alphafold_url)
     
-        if response.status_code == 200:
-            prediction_data = response.json()
-            confidence_metrics = [p['plddt'] for p in prediction_data]
+        # if response.status_code == 200:
+        #     prediction_data = response.json()
+        #     confidence_metrics = [p['plddt'] for p in prediction_data]
     
-            if all(c > 60 for c in confidence_metrics):
-                bt.logging.info(f"Found Alphafold prediction for {self.pdb_id} with confidence over 60%")
-                pdb_content = prediction_data[0]['pdb']
-                pdb_filename = os.path.join(self.output_dir, f"{self.pdb_id}.pdb")
-                with open(pdb_filename, "w") as pdb_file:
-                    pdb_file.write(pdb_content)
-            else:
-                bt.logging.info(f"Alphafold prediction for {self.pdb_id} has confidence below 60%")
-                run_localcolabfold = True
-        else:
-            bt.logging.info(f"No Alphafold prediction found for {self.pdb_id}")
-            run_localcolabfold = True
+        #     if all(c > 60 for c in confidence_metrics):
+        #         bt.logging.info(f"Found Alphafold prediction for {self.pdb_id} with confidence over 60%")
+        #         pdb_content = prediction_data[0]['pdb']
+        #         pdb_filename = os.path.join(self.output_dir, f"{self.pdb_id}.pdb")
+        #         with open(pdb_filename, "w") as pdb_file:
+        #             pdb_file.write(pdb_content)
+        #     else:
+        #         bt.logging.info(f"Alphafold prediction for {self.pdb_id} has confidence below 60%")
+        #         run_localcolabfold = True
+        # else:
+        #     bt.logging.info(f"No Alphafold prediction found for {self.pdb_id}")
+        run_localcolabfold = True
     
         # Step 2: If the pdb_id is not found in the Database, run localcolabfold
         if run_localcolabfold:
