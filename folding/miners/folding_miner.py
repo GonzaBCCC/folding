@@ -199,7 +199,7 @@ class FoldingMiner(BaseMinerNeuron):
         return event
 
     def configure_commands(self, mdrun_args: str) -> Dict[str, List[str]]:
-        gpu_args = "-nb gpu -pme gpu"  # GPU-specific arguments
+        gpu_args = "-nb gpu -pme gpu -update gpu"  # GPU-specific arguments
         commands = [
             "gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr",  # Temperature equilibration
             "gmx mdrun -deffnm nvt " + mdrun_args + " " + gpu_args,
