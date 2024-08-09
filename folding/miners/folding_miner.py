@@ -6,6 +6,8 @@ import concurrent.futures
 from typing import Dict, List, Tuple
 from collections import defaultdict
 import bittensor as bt
+from Bio import SeqIO
+from Bio.PDB import PDBParser
 
 # import base miner class which takes care of most of the boilerplate
 from folding.base.miner import BaseMinerNeuron
@@ -527,6 +529,18 @@ class SimulationManager:
             return response.json()
         else:
             return None
+
+    def pdb_to_fasta(pdb_id, pdb_file, fasta_file):
+        parser = PDBParser()
+        structure = parser.get_structure('protein', pdb_file)
+        sequence = ''
+        for model in structure:
+            for chain in model:
+                for residue in chain:
+                    if residue.id[0] == ' ':
+                        sequence += residue.resname
+        with open(fasta_file, 'w') as f:
+            f.write(f">pdb_id\n{sequence}\n")
 
     def get_state(self) -> str:
         """get_state reads a txt file that contains the current state of the simulation"""
