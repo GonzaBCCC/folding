@@ -28,12 +28,33 @@ def modify_emin_mdp(md_inputs, new_lines=None):
     emin_mdp = md_inputs['emin.mdp']
     lines = emin_mdp.split('\n')
     
-    # Modify specific lines
+    # Parameters to check and add if missing
+    required_params = {
+        'cutoff-scheme': 'cutoff-scheme = Verlet',
+        'nstlist': 'nstlist = 10',
+        'pme-order': 'pme-order = 4',
+        'ewald-rtol': 'ewald-rtol = 1e-5'
+    }
+    
+    # Track which parameters are found
+    found_params = {key: False for key in required_params}
+    
+    # Modify specific lines and check for required parameters
     for i, line in enumerate(lines):
         if line.startswith('emstep'):
             lines[i] = 'emstep = 0.015   ; Modified minimization step size'
         elif line.startswith('nsteps'):
             lines[i] = 'nsteps = 50     ; Modified number of steps'
+        
+        # Check for required parameters
+        for param in required_params:
+            if line.startswith(param):
+                found_params[param] = True
+    
+    # Add missing parameters
+    for param, value in required_params.items():
+        if not found_params[param]:
+            lines.append(value)
     
     # Add new lines if provided
     if new_lines:
@@ -482,6 +503,10 @@ class SimulationManager:
         new_lines = [
             #'new_param1 = value1   ; Description for new_param1',
             #'new_param2 = value2   ; Description for new_param2'
+            #'cutoff-scheme   = Verlet ; Use Verlet cutoff scheme for better GPU performance',
+            #'nstlist         = 20   ; Frequency of updating the neighbour list',
+            #'pme-order       = 4    ; Particle Mesh Ewald interpolation order',
+            #'ewald-rtol      = 1e-5 ; Ewald tolerance for long range interactions'
             ]
         if len(new_lines)>0:
             md_inputs = modify_emin_mdp(md_inputs, new_lines)
