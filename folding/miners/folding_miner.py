@@ -65,6 +65,92 @@ def modify_emin_mdp(md_inputs, new_lines=None):
     return md_inputs
 #######
 
+######
+# Function to modify specific lines in emin.mdp and add new lines
+def modify_emin_mdp(md_inputs, new_lines=None):
+    nvt_mdp = md_inputs['nvt.mdp']
+    lines = nvt_mdp.split('\n')
+    
+    # Parameters to check and add if missing
+    required_params = {
+        'pbc': 'pbc = xyz',
+        'vdw-modifier': 'vdw-modifier = potential-switch',
+        'cutoff-scheme': 'cutoff-scheme = Verlet',
+        'nstlist': 'nstlist = 20',
+        'rlist': 'rlist = 1.0'
+    }
+    
+    # Track which parameters are found
+    found_params = {key: False for key in required_params}
+    
+    # Modify specific lines and check for required parameters
+    for i, line in enumerate(lines):
+        if line.startswith('nsteps'):
+            lines[i] = 'nsteps = 3500   ; Modified number of steps'
+        
+        # Check for required parameters
+        for param in required_params:
+            if line.startswith(param):
+                found_params[param] = True
+    
+    # Add missing parameters
+    for param, value in required_params.items():
+        if not found_params[param]:
+            lines.append(value)
+    
+    # Add new lines if provided
+    if new_lines:
+        lines.extend(new_lines)
+    
+    # Join the lines back together
+    md_inputs['nvt.mdp'] = '\n'.join(lines)
+    return md_inputs
+#######
+######
+# Function to modify specific lines in emin.mdp and add new lines
+def modify_emin_mdp(md_inputs, new_lines=None):
+    npt_mdp = md_inputs['npt.mdp']
+    lines = npt_mdp.split('\n')
+    
+    # Parameters to check and add if missing
+    required_params = {
+        'pbc': 'pbc = xyz',
+        'vdw-modifier': 'vdw-modifier = potential-switch',
+        'cutoff-scheme': 'cutoff-scheme = Verlet',
+        'nstlist': 'nstlist = 20',
+        'rlist': 'rlist = 1.0',
+        'rvdw': 'rvdw = 1.0',
+        'tau_p': 'tau_p = 4.0'
+    }
+    
+    # Track which parameters are found
+    found_params = {key: False for key in required_params}
+    
+    # Modify specific lines and check for required parameters
+    for i, line in enumerate(lines):
+        if line.startswith('nsteps'):
+            lines[i] = 'nsteps = 35000   ; Modified number of steps'
+        
+        # Check for required parameters
+        for param in required_params:
+            if line.startswith(param):
+                found_params[param] = True
+    
+    # Add missing parameters
+    for param, value in required_params.items():
+        if not found_params[param]:
+            lines.append(value)
+    
+    # Add new lines if provided
+    if new_lines:
+        lines.extend(new_lines)
+    
+    # Join the lines back together
+    md_inputs['npt.mdp'] = '\n'.join(lines)
+    return md_inputs
+#######
+
+
 def attach_files(
     files_to_attach: List, synapse: JobSubmissionSynapse
 ) -> JobSubmissionSynapse:
